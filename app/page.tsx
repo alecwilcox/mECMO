@@ -88,7 +88,13 @@ const Pill: React.FC<PillProps> = ({ active, onClick, children }) => (
 );
 
 export default function App() {
+  // Local display number (we’ll sync to DB case number after submit)
   const [recordNumber, setRecordNumber] = useState(712);
+
+  // Submit UX
+  const [submitting, setSubmitting] = useState(false);
+  const [lastCase, setLastCase] = useState<number | null>(null);
+  const [submittedText, setSubmittedText] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -149,6 +155,32 @@ export default function App() {
     setForm(getInitialForm());
   };
 
+  // ======= Submit & Email (via /api/submit) =======
+  const submitForm = async () => {
+    try {
+      setSubmitting(true);
+      setSubmittedText(null);
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recordNumber, ...form }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Submit failed");
+
+      // Sync local display to global DB case number
+      setLastCase(json.caseNumber);
+      setRecordNumber(json.caseNumber);
+      setSubmittedText(`Submitted as Case #${json.caseNumber}`);
+      newForm();
+    } catch (err: any) {
+      alert(`Submit failed: ${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // ======= Existing exports =======
   const toCSV = () => {
     const entries = Object.entries({ Record: recordNumber, ...form });
     const headers = entries.map(([k]) => k).join(",");
@@ -159,10 +191,8 @@ export default function App() {
     const a = document.createElement("a");
     a.href = url;
     a.download = `mECMO_EMS_${recordNumber}.csv`;
-    document.body.appendChild(a);
     a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 0);
+    URL.revokeObjectURL(url);
     setRecordNumber((n) => n + 1);
   };
 
@@ -425,6 +455,16 @@ export default function App() {
           <div className="text-xs text-gray-600 mr-auto">
             All data stays in your browser. Export saves a numbered file and auto-increments.
           </div>
+
+          {/* Submit & Email */}
+          <Button onClick={submitForm} disabled={submitting} className="rounded-2xl">
+            {submitting ? "Submitting..." : "Submit & Email"}
+          </Button>
+          {submittedText && (
+            <div className="text-xs text-green-700">{submittedText}</div>
+          )}
+
+          {/* Exports */}
           <Button onClick={toPDF} className="rounded-2xl">
             <FileDown className="mr-2 h-4 w-4" />
             Export PDF
