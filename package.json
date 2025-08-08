@@ -23,5 +23,7 @@
   "@types/react": "18.2.66",
   "@types/react-dom": "18.2.22",
   "@types/node": "20.14.9"
+  "@supabase/supabase-js": "2.45.4",
+  "resend": "3.3.0"
 }
 }
