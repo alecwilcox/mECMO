@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY!);
 
 export async function GET() {
   try {
-    const to = process.env.DESTINATION_EMAIL || "wilco477@umn.edu";
+    const to = process.env.DESTINATION_EMAIL || "alec.wilcox@me.com";
     const from = process.env.FROM_EMAIL || "onboarding@resend.dev";
     const result = await resend.emails.send({
       from, to,
