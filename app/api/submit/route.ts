@@ -6,7 +6,7 @@ import { Resend } from "resend";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!; // server-only
 const RESEND_API_KEY = process.env.RESEND_API_KEY!;
-const DESTINATION_EMAIL = process.env.DESTINATION_EMAIL || "wilco477@umn.edu";
+const DESTINATION_EMAIL = process.env.DESTINATION_EMAIL || "alec.wilcox@me.com";
 const FROM_EMAIL = process.env.FROM_EMAIL || "onboarding@resend.dev"; // replace with verified sender later
 
 // ---- Clients ----
