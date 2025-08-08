@@ -10,7 +10,54 @@ import { Switch } from "@/components/ui/switch";
 import { Download, FileDown } from "lucide-react";
 import jsPDF from "jspdf";
 
-const Section = ({ title, children }) => (
+// ================= Types =================
+type SectionProps = { title: React.ReactNode; children: React.ReactNode };
+type YesNoProps = {
+  label: string;
+  value: boolean | null;
+  onChange: (v: boolean) => void;
+};
+type PillProps = { active: boolean; onClick: () => void; children: React.ReactNode };
+
+type FormState = {
+  emsAgency: string;
+  crewNumber: string;
+  wantFollowUp: boolean;
+  crewNamesPhones: string;
+  followUpEmail: string;
+  runNumber: string;
+  witnessedArrest: boolean | null;
+  timeOfArrest: string;
+  bystanderCPR: boolean | null;
+  bysCPRStart: string;
+  firstResponderCPR: boolean | null;
+  firstResponderOnScene: string;
+  downTimePriorToCPR: string;
+  aedShocksPrior: boolean | null;
+  aedShocksNumber: string;
+  dispatched: string;
+  enroute: string;
+  onScene: string;
+  leaveScene: string;
+  arriveHospital: string;
+  lucasOn: boolean | null;
+  emsCPRStartTime: string;
+  airway: string;
+  intubationIssues: string;
+  utilized302: boolean | null;
+  resQpod: boolean | null;
+  lastETCO2: string;
+  doseEpinephrine: string;
+  doseAmiodarone: string;
+  doseLidocaine: string;
+  doseSodiumBicarbonate: string;
+  doseOther: string;
+  initialRhythmEMS: string;
+  emsShocksNumber: string;
+};
+
+// ================= UI helpers =================
+const Section: React.FC<SectionProps> = ({ title, children }) => (
   <Card className="shadow-xl rounded-2xl mb-6">
     <CardContent className="p-6">
       <h2 className="text-xl font-semibold mb-4">{title}</h2>
@@ -19,7 +66,7 @@ const Section = ({ title, children }) => (
   </Card>
 );
 
-const YesNo = ({ label, value, onChange }) => (
+const YesNo: React.FC<YesNoProps> = ({ label, value, onChange }) => (
   <div className="flex items-center justify-between border rounded-xl p-3">
     <Label className="text-sm font-medium">{label}</Label>
     <div className="flex items-center gap-3">
@@ -30,7 +77,7 @@ const YesNo = ({ label, value, onChange }) => (
   </div>
 );
 
-const Pill = ({ active, onClick, children }) => (
+const Pill: React.FC<PillProps> = ({ active, onClick, children }) => (
   <button
     type="button"
     onClick={onClick}
@@ -42,19 +89,21 @@ const Pill = ({ active, onClick, children }) => (
 
 export default function App() {
   const [recordNumber, setRecordNumber] = useState(712);
+
   useEffect(() => {
-    try {
-      const saved = window?.localStorage?.getItem("mecmo_record_number");
+    if (typeof window !== "undefined") {
+      const saved = window.localStorage.getItem("mecmo_record_number");
       if (saved) setRecordNumber(parseInt(saved, 10));
-    } catch {}
+    }
   }, []);
+
   useEffect(() => {
-    try {
-      window?.localStorage?.setItem("mecmo_record_number", String(recordNumber));
-    } catch {}
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("mecmo_record_number", String(recordNumber));
+    }
   }, [recordNumber]);
 
-  const getInitialForm = () => ({
+  const getInitialForm = (): FormState => ({
     emsAgency: "",
     crewNumber: "",
     wantFollowUp: false,
@@ -91,8 +140,9 @@ export default function App() {
     emsShocksNumber: "",
   });
 
-  const [form, setForm] = useState(getInitialForm());
-  const set = (key, val) => setForm((prev) => ({ ...prev, [key]: val }));
+  const [form, setForm] = useState<FormState>(getInitialForm());
+  const set = <K extends keyof FormState>(key: K, val: FormState[K]) =>
+    setForm((prev) => ({ ...prev, [key]: val }));
   const resetForm = () => setForm(getInitialForm());
   const newForm = () => {
     setRecordNumber((n) => n + 1);
@@ -125,11 +175,11 @@ export default function App() {
     doc.text(`Record #: ${recordNumber}`, margin, margin + 38);
     if (form.wantFollowUp) doc.text(`Follow-up email: ${form.followUpEmail}`, margin, margin + 54);
     let y = margin + 76;
-    const line = (title, value) => {
+    const line = (title: string, value: string | number | boolean | null) => {
       doc.setFont("helvetica", "bold");
       doc.text(String(title), margin, y);
       doc.setFont("helvetica", "normal");
-      doc.text(String(value || "—"), margin + 210, y, { maxWidth: 335 });
+      doc.text(String(value ?? "—"), margin + 210, y, { maxWidth: 335 });
       y += 18;
     };
     line("Transporting EMS agency", form.emsAgency);
@@ -183,6 +233,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-5xl mx-auto p-4 md:p-8">
+        {/* HEADER */}
         <header className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">mECMO Patient – EMS INFO</h1>
@@ -208,6 +259,7 @@ export default function App() {
           </div>
         </header>
 
+        {/* EMS & Crew */}
         <Section title="EMS & Crew">
           <div className="grid gap-2">
             <Label>Transporting EMS agency name</Label>
@@ -249,6 +301,7 @@ export default function App() {
           </div>
         </Section>
 
+        {/* Arrest & CPR Details */}
         <Section title="Arrest & CPR Details">
           <YesNo label="Witnessed Arrest?" value={form.witnessedArrest} onChange={(v) => set("witnessedArrest", v)} />
           <div className="grid gap-2">
@@ -282,6 +335,7 @@ export default function App() {
           )}
         </Section>
 
+        {/* EMS Times */}
         <Section title="EMS Times">
           <div className="grid gap-2">
             <Label>Dispatched</Label>
@@ -305,6 +359,7 @@ export default function App() {
           </div>
         </Section>
 
+        {/* Resuscitation Details */}
         <Section title="Resuscitation Details">
           <YesNo label="LUCAS on?" value={form.lucasOn} onChange={(v) => set("lucasOn", v)} />
           <div className="grid gap-2">
@@ -341,6 +396,7 @@ export default function App() {
           </div>
         </Section>
 
+        {/* Medication Doses */}
         <Section title="Medication Doses (enter latest administered dose)">
           <div className="grid gap-2">
             <Label>Epinephrine (mg or mcg)</Label>
@@ -364,8 +420,11 @@ export default function App() {
           </div>
         </Section>
 
+        {/* Sticky footer actions */}
         <div className="flex flex-col md:flex-row items-center gap-3 justify-end sticky bottom-4 bg-gray-50 py-4">
-          <div className="text-xs text-gray-600 mr-auto">All data stays in your browser. Export saves a numbered file and auto-increments.</div>
+          <div className="text-xs text-gray-600 mr-auto">
+            All data stays in your browser. Export saves a numbered file and auto-increments.
+          </div>
           <Button onClick={toPDF} className="rounded-2xl">
             <FileDown className="mr-2 h-4 w-4" />
             Export PDF
